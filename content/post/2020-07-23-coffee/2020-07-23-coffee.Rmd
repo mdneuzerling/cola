@@ -1,0 +1,59 @@
+---
+title: coffee
+author: ~
+date: '2020-07-23'
+slug: coffee
+categories: []
+tags: []
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidymodels)
+set.seed(2304) # selected by my girlfriend
+```
+
+```{r data-load, include=FALSE, cache=TRUE}
+tidy_tuesday <- tidytuesdayR::tt_load(2020, week = 28)
+coffee <- tidy_tuesday$coffee_ratings
+```
+
+## skimr
+
+```{r skimr}
+skimr::skim(coffee)
+```
+
+## visdat
+
+```{r visdat, fig.width=10, fig.height=10}
+visdat::vis_dat(coffee)
+```
+
+## ggplot
+
+```{r coffee-plot, fig.width=10, fig.height=5, warning = FALSE, message = FALSE}
+coffee %>% 
+  filter(!is.na(country_of_origin)) %>%
+  inner_join(
+    coffee %>%
+      group_by(country_of_origin) %>% 
+      summarise(n = n(), average_cupper_points = mean(cupper_points)) %>%
+      filter(n / sum(n) > 0.01),
+    by = "country_of_origin"
+  ) %>% 
+  ggplot(aes(
+    x = cupper_points,
+    y = fct_reorder(country_of_origin, average_cupper_points),
+    fill = average_cupper_points
+  )) + 
+  ggridges::geom_density_ridges() +
+  xlim(5, 10) +
+  scale_fill_gradient(low = "#A8805C", high = "#5F3622") +
+  ggtitle("Coffee quality by country of origin") +
+  xlab("cupper points") +
+  ylab(NULL) +
+  theme_minimal(base_size = 16, base_family = "Montserrat") +
+  theme(legend.position = "none")
+```
